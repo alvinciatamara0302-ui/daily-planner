@@ -4,6 +4,10 @@ A clean, modern daily planner with an AI assistant. Plan your day, stay
 focused, and track your progress — all in one place. **100% free to run** and
 **open source (MIT)** — anyone can use it, run their own copy, or improve it.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Falvinciatamara0302-ui%2Fdaily-planner&env=GEMINI_API_KEY&envDescription=Free%20Gemini%20API%20key%20for%20the%20AI%20assistant%20(optional)&envLink=https%3A%2F%2Faistudio.google.com%2Fapikey)
+
+Click the button above to deploy your own free copy in a couple of minutes.
+
 ## Features
 
 - ✅ **To-Do List** — add, edit, complete, and delete tasks (with priorities)
