@@ -110,6 +110,18 @@ export function AiAssistant() {
           ...prev,
         ]);
         count++;
+      } else if (a.type === "complete_task" && a.id) {
+        tasks.setValue((prev) =>
+          prev.map((t) =>
+            t.id === a.id
+              ? { ...t, completed: true, completedAt: new Date().toISOString() }
+              : t,
+          ),
+        );
+        count++;
+      } else if (a.type === "delete_task" && a.id) {
+        tasks.setValue((prev) => prev.filter((t) => t.id !== a.id));
+        count++;
       } else if (a.type === "add_goal" && a.text) {
         goals.setValue((prev) => [
           ...prev,

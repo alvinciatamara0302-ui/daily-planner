@@ -60,12 +60,15 @@ An Action is one of:
 - { "type": "update_event", "id": string, "title"?: string, "date"?: "YYYY-MM-DD", "time"?: "HH:MM", "endTime"?: "HH:MM" }
 - { "type": "delete_event", "id": string }
 - { "type": "add_task", "title": string, "priority": "low" | "medium" | "high" }
+- { "type": "complete_task", "id": string }
+- { "type": "delete_task", "id": string }
 - { "type": "add_goal", "text": string }
 
 Rules:
 - Use 24-hour times (e.g. "14:00"). If no date is given, use today's date.
 - Only include actions when the user clearly wants to add, schedule, move, rearrange, or remove something. For questions, advice, or suggestions, return an empty "actions" array and put your help in "reply".
 - To move or rearrange EXISTING events, use "update_event" with the exact "id" from the events list below. Never invent ids.
+- To complete or delete tasks/events, use the exact "id" from the lists below. If the user asks to remove or clear everything, include one delete action for each matching item.
 - When you make changes, briefly say what you did in "reply".
 - Keep "reply" concise, positive, and easy to read.`;
 
@@ -112,9 +115,21 @@ Rules:
 
     const data = await res.json();
     if (!res.ok) {
-      const detail = data?.error?.message || "Unknown error";
+      // 429 = too many requests (the free tier allows a limited number
+      // per minute). Show a friendly message instead of the raw error.
+      if (res.status === 429) {
+        return Response.json({
+          reply:
+            "I'm getting a lot of requests right now — the free AI tier only allows a few per minute. Please wait about 30 seconds and try again. 🙂",
+          actions: [],
+        });
+      }
+      // For other errors, show a short, clean message (no long URLs).
+      const detail = (data?.error?.message || "Something went wrong").split(
+        ".",
+      )[0];
       return Response.json({
-        reply: `Sorry, the AI service returned an error: ${detail}`,
+        reply: `Sorry, I couldn't complete that: ${detail}.`,
         actions: [],
       });
     }

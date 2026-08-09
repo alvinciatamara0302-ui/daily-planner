@@ -1,7 +1,8 @@
 # Daily Planner Dashboard
 
 A clean, modern daily planner with an AI assistant. Plan your day, stay
-focused, and track your progress — all in one place. **100% free to run.**
+focused, and track your progress — all in one place. **100% free to run** and
+**open source (MIT)** — anyone can use it, run their own copy, or improve it.
 
 ## Features
 
@@ -46,6 +47,13 @@ The assistant uses Google Gemini's free tier.
 
 Without a key, everything else works and the assistant shows setup tips.
 
+> **Note on the free tier:** Google's free Gemini tier allows a limited number
+> of requests per minute. If you send many messages very quickly, the
+> assistant may briefly say it's busy — just wait ~30 seconds and try again.
+> If you deploy one public copy for many people, they all share that limit, so
+> for heavy shared use it's best if each person runs their own copy with their
+> own free key.
+
 ## Deploy for free (Vercel)
 
 1. Push this project to GitHub.
@@ -68,3 +76,12 @@ src/
     app-data.ts        Shared types, storage keys, small helpers
     navigation.ts      The sidebar links
 ```
+
+## Contributing
+
+Contributions are welcome! Fork the repo, make your changes, and open a pull
+request. This is a beginner-friendly project — the code is heavily commented.
+
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify, and share.
