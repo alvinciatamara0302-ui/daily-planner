@@ -37,7 +37,8 @@ export type CalendarEvent = {
   id: string;
   title: string;
   date: string; // "YYYY-MM-DD"
-  time?: string; // optional "HH:MM"
+  time?: string; // optional start time "HH:MM"
+  endTime?: string; // optional end time "HH:MM"
 };
 
 // One completed focus session from the Pomodoro timer.
@@ -55,6 +56,8 @@ export const STORAGE_KEYS = {
   notes: "dp.notes",
   events: "dp.events",
   focus: "dp.focusSessions",
+  userName: "dp.userName", // the user's first name (for greetings)
+  briefing: "dp.briefing", // cached "Today's AI Briefing" { date, text }
 } as const;
 
 // ---------- Small helpers ----------

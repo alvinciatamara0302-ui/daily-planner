@@ -26,7 +26,7 @@ export function SidebarNav() {
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               // different look depending on active vs. not
               isActive
-                ? "bg-primary text-primary-foreground"
+                ? "bg-gradient-to-r from-violet-600 to-indigo-500 text-white shadow-sm shadow-violet-500/30"
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >

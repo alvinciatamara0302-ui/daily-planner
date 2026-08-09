@@ -32,6 +32,7 @@ export function CalendarView() {
   // Form state for adding an event to the selected day.
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
   // ---------- Build the grid ----------
   // Weekday of the 1st (0 = Sunday) tells us how many blanks to add first.
@@ -77,10 +78,12 @@ export function CalendarView() {
       title: trimmed,
       date: selectedDate,
       time: time || undefined,
+      endTime: endTime || undefined,
     };
     setEvents([...events, event]);
     setTitle("");
     setTime("");
+    setEndTime("");
   }
 
   function deleteEvent(id: string) {
@@ -182,13 +185,21 @@ export function CalendarView() {
                 if (e.key === "Enter") addEvent();
               }}
             />
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
                 className="flex-1"
-                aria-label="Event time"
+                aria-label="Start time"
+              />
+              <span className="text-muted-foreground">–</span>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="flex-1"
+                aria-label="End time"
               />
               <Button onClick={addEvent}>
                 <Plus className="h-4 w-4" />
@@ -210,8 +221,9 @@ export function CalendarView() {
                   className="flex items-center gap-2 rounded-lg border p-2 text-sm"
                 >
                   {event.time && (
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
                       {event.time}
+                      {event.endTime ? `–${event.endTime}` : ""}
                     </span>
                   )}
                   <span className="flex-1">{event.title}</span>

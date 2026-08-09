@@ -23,21 +23,25 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WeatherWidget } from "@/components/weather/weather-widget";
+import { AiBriefing } from "@/components/dashboard/ai-briefing";
+import { cn } from "@/lib/utils";
 
-// A small reusable stat card (big number + label + icon).
+// A small reusable stat card. `color` gives each card its own accent.
 function StatCard({
   label,
   value,
   icon: Icon,
+  color,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
+  color: string;
 }) {
   return (
     <Card>
       <CardContent className="flex items-center gap-4 py-5">
-        <div className="rounded-full bg-primary/10 p-3 text-primary">
+        <div className={cn("rounded-xl p-3", color)}>
           <Icon className="h-6 w-6" />
         </div>
         <div>
@@ -47,14 +51,6 @@ function StatCard({
       </CardContent>
     </Card>
   );
-}
-
-// Pick a greeting based on the time of day.
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
 }
 
 export function Dashboard() {
@@ -96,39 +92,49 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Greeting + weather side by side on wider screens */}
-      <div className="grid items-center gap-4 md:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold">{greeting()}! 👋</h2>
-          <p className="text-muted-foreground">
-            Here&apos;s your day at a glance.
-          </p>
-        </div>
-        <WeatherWidget />
-      </div>
+      {/* Today's AI Briefing — the friendly daily summary */}
+      <AiBriefing />
 
       {/* Celebration banner when all tasks are complete */}
       {allTasksDone && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="flex items-center gap-3 py-4 text-primary">
-            <PartyPopper className="h-6 w-6" />
-            <span className="font-medium">
-              You completed all your tasks. Great work today!
-            </span>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 p-4 text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-300">
+          <PartyPopper className="h-6 w-6" />
+          <span className="font-medium">
+            You completed all your tasks. Great work today!
+          </span>
+        </div>
       )}
 
-      {/* Stat cards */}
+      {/* Stat cards — each with its own color */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Tasks completed" value={completed} icon={CheckCircle2} />
-        <StatCard label="Tasks remaining" value={remaining} icon={Circle} />
-        <StatCard label="Focus minutes today" value={focusMinutes} icon={Timer} />
-        <StatCard label="Goals reached" value={goalsReached} icon={Target} />
+        <StatCard
+          label="Tasks completed"
+          value={completed}
+          icon={CheckCircle2}
+          color="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+        />
+        <StatCard
+          label="Tasks remaining"
+          value={remaining}
+          icon={Circle}
+          color="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+        />
+        <StatCard
+          label="Focus minutes today"
+          value={focusMinutes}
+          icon={Timer}
+          color="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+        />
+        <StatCard
+          label="Goals reached"
+          value={goalsReached}
+          icon={Target}
+          color="bg-amber-500/15 text-amber-600 dark:text-amber-400"
+        />
       </div>
 
-      {/* Two columns: top tasks and today's events */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Bottom row: top tasks, today's events, weather */}
+      <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Top tasks</CardTitle>
@@ -186,8 +192,9 @@ export function Dashboard() {
                 {todaysEvents.map((event) => (
                   <li key={event.id} className="flex items-center gap-2 text-sm">
                     {event.time && (
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
                         {event.time}
+                        {event.endTime ? `–${event.endTime}` : ""}
                       </span>
                     )}
                     <span className="truncate">{event.title}</span>
@@ -197,6 +204,9 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Weather */}
+        <WeatherWidget />
       </div>
     </div>
   );
