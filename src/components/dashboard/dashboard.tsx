@@ -22,7 +22,6 @@ import {
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { WeatherWidget } from "@/components/weather/weather-widget";
 import { AiBriefing } from "@/components/dashboard/ai-briefing";
 import { cn } from "@/lib/utils";
 
@@ -205,8 +204,48 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Weather */}
-        <WeatherWidget />
+        {/* Goals summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>Goals</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                {goalsReached} of {goals.length}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {goals.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No goals yet.{" "}
+                <Link href="/goals" className="text-primary underline">
+                  Set a goal
+                </Link>
+                .
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {goals.slice(0, 5).map((goal) => (
+                  <li key={goal.id} className="flex items-center gap-2 text-sm">
+                    {goal.done ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    ) : (
+                      <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span
+                      className={cn(
+                        "truncate",
+                        goal.done && "text-muted-foreground line-through",
+                      )}
+                    >
+                      {goal.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
