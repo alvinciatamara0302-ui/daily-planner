@@ -1,6 +1,8 @@
-// The Weather Widget: shows today's weather using the free Open-Meteo API
-// (no API key needed). It tries the browser's location, and falls back to
-// a default city if location access is denied.
+// The Weather Widget: shows today's weather for the user's real location.
+// It uses the browser's geolocation to get coordinates, turns those into a
+// city name (free reverse-geocoding, no API key), and fetches the weather
+// from the free Open-Meteo API. Falls back to a default city if location
+// access is denied.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -35,13 +37,32 @@ function describeWeather(code: number): { label: string; icon: LucideIcon } {
   return { label: "Cloudy", icon: Cloud };
 }
 
-// The shape of the weather info we keep in state.
+// Look up a human-readable city name for some coordinates.
+// Uses BigDataCloud's free client-side reverse-geocoder (no API key).
+async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+    );
+    if (!res.ok) return "Your location";
+    const data = await res.json();
+    return (
+      data.city ||
+      data.locality ||
+      data.principalSubdivision ||
+      "Your location"
+    );
+  } catch {
+    return "Your location";
+  }
+}
+
 type Weather = {
   temp: number;
   code: number;
   high: number;
   low: number;
-  label: string;
+  label: string; // the place name
 };
 
 export function WeatherWidget() {
@@ -49,8 +70,8 @@ export function WeatherWidget() {
   const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
 
   useEffect(() => {
-    // Fetch weather for a given latitude/longitude and place name.
-    async function load(lat: number, lon: number, label: string) {
+    // Fetch the weather for given coordinates and show it under `label`.
+    async function loadWeather(lat: number, lon: number, label: string) {
       try {
         const url =
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
@@ -72,15 +93,21 @@ export function WeatherWidget() {
       }
     }
 
+    // When we have the user's coordinates, look up the city, then load weather.
+    async function useCoords(lat: number, lon: number) {
+      const city = await reverseGeocode(lat, lon);
+      loadWeather(lat, lon, city);
+    }
+
     // Ask the browser for the user's location. If denied, use the fallback.
-    if ("geolocation" in navigator) {
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => load(pos.coords.latitude, pos.coords.longitude, "Your location"),
-        () => load(FALLBACK.lat, FALLBACK.lon, FALLBACK.label),
-        { timeout: 8000 },
+        (pos) => useCoords(pos.coords.latitude, pos.coords.longitude),
+        () => loadWeather(FALLBACK.lat, FALLBACK.lon, FALLBACK.label),
+        { timeout: 8000, enableHighAccuracy: false },
       );
     } else {
-      load(FALLBACK.lat, FALLBACK.lon, FALLBACK.label);
+      loadWeather(FALLBACK.lat, FALLBACK.lon, FALLBACK.label);
     }
   }, []);
 
@@ -116,7 +143,7 @@ export function WeatherWidget() {
           <div className="text-sm text-muted-foreground">{label}</div>
         </div>
         <div className="text-right text-sm text-muted-foreground">
-          <div>{weather.label}</div>
+          <div className="font-medium text-foreground">{weather.label}</div>
           <div>
             H: {weather.high}° L: {weather.low}°
           </div>

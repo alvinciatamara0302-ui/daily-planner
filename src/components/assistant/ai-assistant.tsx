@@ -6,7 +6,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Send, X, Bot, User } from "lucide-react";
+import { Sparkles, Send, X, Bot, User, Mic } from "lucide-react";
 import { toast } from "sonner";
 import {
   type Task,
@@ -36,6 +36,31 @@ type Action = {
   priority?: Priority;
 };
 
+// Minimal types for the browser's Web Speech API (not in default TS types).
+interface SpeechAlternative {
+  transcript: string;
+}
+interface SpeechResult {
+  0: SpeechAlternative;
+}
+interface SpeechResultList {
+  0: SpeechResult;
+}
+interface SpeechResultEvent {
+  results: SpeechResultList;
+}
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((e: SpeechResultEvent) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
 const WELCOME: Message = {
   role: "assistant",
   text: "Hi! I'm your planning assistant. Tell me your plans (e.g. \"Padel 2-4pm, learn Chinese 5-6pm\") and I'll add them for you. Ask me to rearrange your day, break down a task, or suggest what to do first.",
@@ -52,6 +77,8 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   // Live copies of the user's data (read + write, synced to localStorage).
   const tasks = useLocalStorage<Task[]>(STORAGE_KEYS.tasks, []);
@@ -184,6 +211,46 @@ export function AiAssistant() {
     }
   }
 
+  // Start/stop voice input using the browser's built-in speech recognition.
+  function toggleVoice() {
+    // If already listening, stop.
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    // Grab the browser's speech recognition (Chrome/Edge use a prefix).
+    const w = window as unknown as {
+      SpeechRecognition?: SpeechRecognitionCtor;
+      webkitSpeechRecognition?: SpeechRecognitionCtor;
+    };
+    const Recognition = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Recognition) {
+      toast.error(
+        "Voice input isn't supported in this browser. Try Chrome or Edge.",
+      );
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    // When speech is recognized, send it as a message automatically.
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      send(transcript);
+    };
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
+  }
+
+  // Stop listening if the widget unmounts.
+  useEffect(() => {
+    return () => recognitionRef.current?.stop();
+  }, []);
+
   return (
     <>
       {/* Floating open button with a gradient + glow */}
@@ -284,7 +351,7 @@ export function AiAssistant() {
           {/* Input row */}
           <div className="flex gap-2 border-t p-3">
             <Input
-              placeholder="Tell me your plans..."
+              placeholder={listening ? "Listening…" : "Tell me your plans..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -292,6 +359,19 @@ export function AiAssistant() {
               }}
               disabled={loading}
             />
+            {/* Microphone: talk to the assistant. Turns red while listening. */}
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={toggleVoice}
+              disabled={loading}
+              aria-label={listening ? "Stop listening" : "Voice input"}
+              className={cn(
+                listening && "animate-pulse bg-red-500 text-white hover:bg-red-600",
+              )}
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
             <Button
               size="icon"
               onClick={() => send(input)}
